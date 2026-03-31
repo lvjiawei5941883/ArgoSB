@@ -2058,6 +2058,17 @@ echo "========================================================="
 echo "相关快捷方式如下：(首次安装成功后需重连SSH，agsbx快捷方式才可生效)"
 showmode
 }
+hyjmptdel(){
+if command -v apk >/dev/null 2>&1; then
+rc-update del nftables >/dev/null 2>&1
+/etc/init.d/nftables stop >/dev/null 2>&1
+else
+systemctl disable nftables >/dev/null 2>&1
+systemctl stop nftables >/dev/null 2>&1
+fi
+rm -rf /etc/nftables.conf
+nft delete table ip nat >/dev/null 2>&1
+}
 cleandel(){
 for P in /proc/[0-9]*; do if [ -L "$P/exe" ]; then TARGET=$(readlink -f "$P/exe" 2>/dev/null); if echo "$TARGET" | grep -qE '/agsbx/c|/agsbx/s|/agsbx/x'; then PID=$(basename "$P"); kill "$PID" 2>/dev/null; fi; fi; done
 kill -15 $(pgrep -f 'agsbx/s' 2>/dev/null) $(pgrep -f 'agsbx/c' 2>/dev/null) $(pgrep -f 'agsbx/x' 2>/dev/null) $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
@@ -2084,6 +2095,7 @@ rc-service "$svc" stop >/dev/null 2>&1
 rc-update del "$svc" default >/dev/null 2>&1
 done
 rm -rf /etc/init.d/{sing-box,xray,argo} /etc/local.d/alpineargosbx.start /etc/local.d/alpinesubsbx.start
+hyjmptdel
 fi
 }
 xrestart(){
@@ -2106,7 +2118,6 @@ else
 nohup $HOME/agsbx/sing-box run -c $HOME/agsbx/sb.json >/dev/null 2>&1 &
 fi
 }
-
 if [ "$1" = "del" ]; then
 cleandel
 rm -rf sbx_update "$HOME/agsbx" "$HOME/websbx"
@@ -2248,15 +2259,7 @@ fi
 echo "本地IP订阅链接已更新完成"
 fi
 if [ -n "$hyjpt" ]; then
-if command -v apk >/dev/null 2>&1; then
-rc-update del nftables >/dev/null 2>&1
-/etc/init.d/nftables stop >/dev/null 2>&1
-else
-systemctl disable nftables >/dev/null 2>&1
-systemctl stop nftables >/dev/null 2>&1
-fi
-rm -rf /etc/nftables.conf
-nft delete table ip nat 2>/dev/null || true
+hyjmptdel
 nft add table ip nat
 nft add chain ip nat prerouting { type nat hook prerouting priority -100 \; }
 if [ -z "$jppt" ]; then
