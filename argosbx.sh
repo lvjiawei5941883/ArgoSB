@@ -75,9 +75,9 @@ mkdir -p "$HOME/agsbx"
 if [ ! -f sbx_update ]; then
 echo "执行必要的脚本依赖中，请稍后"
 if command -v apk >/dev/null 2>&1; then
-apk update >/dev/null 2>&1 && apk add --no-cache nftables bash busybox-extras gcompat libc6-compat >/dev/null 2>&1
+apk update >/dev/null 2>&1 && apk add --no-cache iptables ip6tables bash busybox-extras gcompat libc6-compat >/dev/null 2>&1
 elif command -v apt >/dev/null 2>&1; then
-apt update >/dev/null 2>&1 && apt install nftables busybox coreutils util-linux -y >/dev/null 2>&1
+apt update >/dev/null 2>&1 && apt install iptables-persistent busybox coreutils util-linux -y >/dev/null 2>&1
 fi
 touch sbx_update
 fi
@@ -2060,16 +2060,6 @@ echo "========================================================="
 echo "相关快捷方式如下：(首次安装成功后需重连SSH，agsbx快捷方式才可生效)"
 showmode
 }
-hyjmptdel(){
-if command -v apk >/dev/null 2>&1; then
-rc-update del nftables >/dev/null 2>&1
-else
-systemctl disable nftables >/dev/null 2>&1
-systemctl stop nftables >/dev/null 2>&1
-rm -rf /etc/nftables.conf
-fi
-nft delete table inet nat >/dev/null 2>&1
-}
 cleandel(){
 for P in /proc/[0-9]*; do if [ -L "$P/exe" ]; then TARGET=$(readlink -f "$P/exe" 2>/dev/null); if echo "$TARGET" | grep -qE '/agsbx/c|/agsbx/s|/agsbx/x'; then PID=$(basename "$P"); kill "$PID" 2>/dev/null; fi; fi; done
 kill -15 $(pgrep -f 'agsbx/s' 2>/dev/null) $(pgrep -f 'agsbx/c' 2>/dev/null) $(pgrep -f 'agsbx/x' 2>/dev/null) $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
@@ -2096,7 +2086,8 @@ rc-service "$svc" stop >/dev/null 2>&1
 rc-update del "$svc" default >/dev/null 2>&1
 done
 rm -rf /etc/init.d/{sing-box,xray,argo} /etc/local.d/alpineargosbx.start /etc/local.d/alpinesubsbx.start
-hyjmptdel
+iptables -t nat -F PREROUTING >/dev/null 2>&1
+netfilter-persistent save >/dev/null 2>&1
 fi
 }
 xrestart(){
@@ -2259,14 +2250,23 @@ rm /tmp/crontab.tmp
 fi
 echo "本地IP订阅链接已更新完成"
 fi
+
+
+
+iptables -t nat -F PREROUTING >/dev/null 2>&1
+ip6tables -t nat -F PREROUTING >/dev/null 2>&1
+netfilter-persistent save >/dev/null 2>&1
+
 if [ -n "$hyjpt" ]; then
-for mod in nf_tables nf_nat nf_conntrack; do modprobe $mod 2>/dev/null; done
-hyjmptdel
-nft add table inet nat
-nft add chain inet nat prerouting '{ type nat hook prerouting priority dstnat; policy accept; }'
-hyjumpport="{$hyjpt}"
-nft add rule inet nat prerouting udp dport $hyjumpport dnat to :$(cat "$HOME/agsbx/port_hy2")
-nft list ruleset > /etc/nftables.conf
+
+hyport=$(cat "$HOME/agsbx/port_hy2")
+hyjpt=(12345 11000:15000 44444 46000:48000 50001)
+    for port in "${hyjpt[@]}"; do
+        iptables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
+        ip6tables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
+    done
+
+
 if command -v apk >/dev/null 2>&1; then
 rc-update add nftables
 else
@@ -2274,6 +2274,8 @@ systemctl enable nftables >/dev/null 2>&1
 systemctl restart nftables >/dev/null 2>&1
 fi
 fi
+
+
 cip
 echo
 else
