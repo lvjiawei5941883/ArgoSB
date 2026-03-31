@@ -2261,9 +2261,10 @@ fi
 echo "本地IP订阅链接已更新完成"
 fi
 if [ -n "$hyjpt" ]; then
+for mod in nf_tables nf_nat nf_conntrack; do modprobe $mod 2>/dev/null; done
 hyjmptdel
 nft add table inet nat
-nft add chain inet nat prerouting { type nat hook prerouting priority -100 \; }
+nft add chain inet nat prerouting '{ type nat hook prerouting priority dstnat; policy accept; }'
 hyjumpport="{$hyjpt}"
 nft add rule inet nat prerouting udp dport $hyjumpport dnat to :$(cat "$HOME/agsbx/port_hy2")
 nft list ruleset > /etc/nftables.conf
