@@ -2250,32 +2250,17 @@ rm /tmp/crontab.tmp
 fi
 echo "本地IP订阅链接已更新完成"
 fi
-
-
-
+if [ -n "$hyjpt" && -n "$hyp" ]; then
 iptables -t nat -F PREROUTING >/dev/null 2>&1
 ip6tables -t nat -F PREROUTING >/dev/null 2>&1
-netfilter-persistent save >/dev/null 2>&1
-
-if [ -n "$hyjpt" ]; then
-
 hyport=$(cat "$HOME/agsbx/port_hy2")
-hyjpt=(12345 11000:15000 44444 46000:48000 50001)
-    for port in "${hyjpt[@]}"; do
-        iptables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
-        ip6tables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
-    done
-
-
-if command -v apk >/dev/null 2>&1; then
-rc-update add nftables
-else
-systemctl enable nftables >/dev/null 2>&1
-systemctl restart nftables >/dev/null 2>&1
+hyjppt=($hyjpt)
+for port in "${hyjppt[@]}"; do
+iptables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
+ip6tables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
+done
+netfilter-persistent save >/dev/null 2>&1
 fi
-fi
-
-
 cip
 echo
 else
