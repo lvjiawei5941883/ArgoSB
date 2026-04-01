@@ -1510,7 +1510,16 @@ fi
 if grep hy2-sb "$HOME/agsbx/sb.json" >/dev/null 2>&1; then
 echo "💣【 Hysteria2 】节点信息如下："
 port_hy2=$(cat "$HOME/agsbx/port_hy2")
-hy2_link="hysteria2://$uuid@$server_ip:$port_hy2?security=tls&alpn=h3&insecure=1&sni=www.bing.com#${sxname}hy2-$hostname"
+hy2_ports=$(iptables -t nat -nL --line 2>/dev/null | grep -w "$port_hy2" | awk '{print $8}' | sed 's/dpts*://')
+if [ -n "$hy2_ports" ]; then
+Hysteria2跳跃端口已开启：
+echo $hy2_ports
+hy2ports=$(echo $hy2_ports | sed 's/:/-/g')
+hyps=$hy2_port,$hy2ports
+else
+hyps=
+fi
+hy2_link="hysteria2://$uuid@$server_ip:$port_hy2?security=tls&alpn=h3&insecure=1&mport=$hyps&sni=www.bing.com#${sxname}hy2-$hostname"
 echo "$hy2_link" >> "$HOME/agsbx/jhsub.txt"
 echo "$hy2_link"
 echo
