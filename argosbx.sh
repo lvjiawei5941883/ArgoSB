@@ -2217,7 +2217,7 @@ echo
 echo "iptables执行开放所有端口"
 fi
 ins
-if [ -n "$subsbx" ]; then
+if [ -n "$sub" ]; then
 subtokenipsub(){
 if [ -z "$subid" ]; then
 subtoken="$(cat "$HOME/agsbx/uuid")"
