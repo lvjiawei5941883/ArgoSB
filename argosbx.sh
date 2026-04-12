@@ -1514,7 +1514,7 @@ hy2_ports=$(iptables -t nat -nL --line 2>/dev/null | grep -w "$port_hy2" | awk '
 if [ -n "$hy2_ports" ]; then
 echo "Hysteria2跳跃端口已开启：$hy2_ports"
 cmhy2pt=$(echo $hy2_ports | tr ':' '-')
-hyps=$cmhy2pt
+hyps="&mport=$cmhy2pt"
 sbhy2pt=$(echo "$hy2_ports" | grep -o '[0-9]\+:[0-9]\+' | sed 's/.*/"&"/' | paste -sd,)
 sbhy2ports(){
     cat <<EOF
@@ -1524,7 +1524,7 @@ EOF
 else
 hyps=
 fi
-hy2_link="hysteria2://$uuid@$server_ip:$port_hy2?security=tls&alpn=h3&insecure=1&allowInsecure=1&mport=$hyps&sni=www.bing.com#${sxname}hy2-$hostname"
+hy2_link="hysteria2://$uuid@$server_ip:$port_hy2?security=tls&alpn=h3&insecure=1&allowInsecure=1$hyps&sni=www.bing.com#${sxname}hy2-$hostname"
 echo "$hy2_link" >> "$HOME/agsbx/jhsub.txt"
 echo "$hy2_link"
 echo
