@@ -75,9 +75,11 @@ mkdir -p "$HOME/agsbx"
 if [ ! -f sbx_update ]; then
 echo "执行必要的脚本依赖中，请稍等10秒……"
 if command -v apk >/dev/null 2>&1; then
-apk update >/dev/null 2>&1 && apk add --no-cache iptables ip6tables bash busybox-extras gcompat libc6-compat >/dev/null 2>&1
+apk update >/dev/null 2>&1 && apk add --no-cache bash busybox-extras gcompat libc6-compat iptables >/dev/null 2>&1
 elif command -v apt >/dev/null 2>&1; then
-apt update >/dev/null 2>&1 && apt install iptables-persistent busybox coreutils util-linux -y >/dev/null 2>&1
+export DEBIAN_FRONTEND=noninteractive
+printf 'iptables-persistent iptables-persistent/autosave_v4 boolean true\niptables-persistent iptables-persistent/autosave_v6 boolean true\n' | debconf-set-selections
+apt update >/dev/null 2>&1 && apt install -y busybox coreutils util-linux iptables iptables-persistent >/dev/null 2>&1
 fi
 touch sbx_update
 fi
