@@ -1537,7 +1537,7 @@ cat <<EOF
         "tag": "${sxname}hy2-$hostname",
         "server": "$server_ip",
         "server_port": $port_hy2,
-$(sbhy2ports)
+$(sbhy2ports 2>/dev/null)
         "password": "$uuid",
         "tls": {
             "enabled": true,
